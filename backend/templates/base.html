@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Jasmin SMS Gateway{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="h-full flex flex-col font-sans text-slate-800">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0">
+            <!-- Logo area -->
+            <div class="p-4 border-b border-slate-800 flex items-center gap-3 bg-slate-950">
+                <img src="{% static 'images/BGFIGAB.jpeg' %}" alt="Logo BGFI" class="h-10 w-auto object-contain bg-white p-1 rounded">
+                <div>
+                    <h1 class="font-bold text-white text-sm leading-tight">Jasmin SMS</h1>
+                    <span class="text-xs text-slate-400">Gateway Manager</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 overflow-y-auto p-4 space-y-6">
+                
+                <!-- Main Menu -->
+                <div>
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Exploitation</div>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="{% url 'sms:dashboard' %}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-slate-800 hover:text-white transition">
+                                <i class="fa-solid fa-chart-line w-5 text-center text-blue-400"></i>
+                                <span>Tableau de bord</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'sms:send_sms' %}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-slate-800 hover:text-white transition">
+                                <i class="fa-solid fa-paper-plane w-5 text-center text-green-400"></i>
+                                <span>Envoyer un SMS</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'sms:sms_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-slate-800 hover:text-white transition">
+                                <i class="fa-solid fa-list-check w-5 text-center text-yellow-400"></i>
+                                <span>Historique SMS</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Jasmin Configuration -->
+                <div>
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Configuration Jasmin</div>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="{% url 'jasmin_config:connectors_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-slate-800 hover:text-white transition">
+                                <i class="fa-solid fa-network-wired w-5 text-center text-indigo-400"></i>
+                                <span>Connecteurs SMPP</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'jasmin_config:groups_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-slate-800 hover:text-white transition">
+                                <i class="fa-solid fa-layer-group w-5 text-center text-purple-400"></i>
+                                <span>Groupes</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'jasmin_config:users_list' %}" class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-slate-800 hover:text-white transition">
+                                <i class="fa-solid fa-users w-5 text-center text-teal-400"></i>
+                                <span>Utilisateurs CLI</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </nav>
+
+            <!-- User Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+                        {{ request.user.username|slice:":2"|upper }}
+                    </div>
+                    <div class="truncate">
+                        <p class="text-xs font-medium text-white truncate">{{ request.user.username }}</p>
+                        <p class="text-[10px] text-slate-400">Administrateur</p>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" title="Déconnexion" class="text-slate-400 hover:text-red-400 p-1.5 transition">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Topbar -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-xl font-bold text-slate-800">
+                    {% block header_title %}Vue d'ensemble{% endblock %}
+                </h2>
+                <div class="flex items-center gap-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                        Jasmin CLI Connecté
+                    </span>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+
+    </div>
+
+</body>
+</html>

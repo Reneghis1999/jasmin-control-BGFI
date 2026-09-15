@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord | Jasmin SMS Gateway{% endblock %}
+
+{% block header_title %}Tableau de bord d'exploitation{% endblock %}
+
+{% block content %}
+<!-- Cartes d'indicateurs (KPIs) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Card 1: Total SMS -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">SMS Envoyés (Mois)</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">128,450</h3>
+            <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fa-solid fa-arrow-up mr-1"></i>+12% par rapport au mois dernier</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+            <i class="fa-solid fa-paper-plane"></i>
+        </div>
+    </div>
+
+    <!-- Card 2: Taux de délivrance -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Taux de Délivrance</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">98.4%</h3>
+            <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Service stable</p>
+        </div>
+        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl">
+            <i class="fa-solid fa-chart-pie"></i>
+        </div>
+    </div>
+
+    <!-- Card 3: Connecteurs SMPP Dynamiques -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connecteurs Actifs</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">
+                {% if jasmin_connected %}
+                    {{ stats.bound_connectors }} / {{ stats.total_connectors }}
+                {% else %}
+                    -- / --
+                {% endif %}
+            </h3>
+            <p class="text-xs mt-1 font-medium {% if jasmin_connected %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                {% if jasmin_connected %}
+                    <i class="fa-solid fa-link mr-1"></i>{{ stats.bound_connectors }} bind(s) SMPP UP
+                {% else %}
+                    <i class="fa-solid fa-plug-circle-xmark mr-1"></i>jcli 8990 Inaccessible
+                {% endif %}
+            </p>
+        </div>
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center text-xl">
+            <i class="fa-solid fa-network-wired"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: Échecs -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Échecs d'envoi</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">142</h3>
+            <p class="text-xs text-rose-600 mt-1 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>0.11% de rejet</p>
+        </div>
+        <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-xl">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Grid Actions Rapides & État Système -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Panel Actions Rapides -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-slate-900">Actions rapides</h3>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <a href="{% url 'sms:send_sms' %}" class="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition group text-center">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </div>
+                <span class="text-sm font-semibold text-slate-800">Envoyer un SMS</span>
+                <span class="text-xs text-slate-500 mt-0.5">Envoi unitaire ou test</span>
+            </a>
+            <a href="{% url 'jasmin_config:connectors_list' %}" class="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition group text-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <span class="text-sm font-semibold text-slate-800">Gérer les SMPP</span>
+                <span class="text-xs text-slate-500 mt-0.5">Connecteurs & routes</span>
+            </a>
+            <a href="{% url 'jasmin_config:users_list' %}" class="flex flex-col items-center justify-center p-4 rounded-xl border border-slate-200 hover:border-teal-500 hover:bg-teal-50/50 transition group text-center">
+                <div class="w-10 h-10 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <span class="text-sm font-semibold text-slate-800">Utilisateurs CLI</span>
+                <span class="text-xs text-slate-500 mt-0.5">Comptes d'accès Jasmin</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Panel État Jasmin Dynamique -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-slate-900">État des Services Jasmin</h3>
+            <a href="{% url 'sms:dashboard' %}" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition">
+                <i class="fa-solid fa-rotate-right"></i>
+            </a>
+        </div>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full {% if jasmin_connected %}bg-emerald-500{% else %}bg-rose-500{% endif %}"></span>
+                    <span class="text-sm font-medium text-slate-700">Jasmin CLI (jcli)</span>
+                </div>
+                {% if jasmin_connected %}
+                    <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-800 rounded">Port 8990 UP</span>
+                {% else %}
+                    <span class="text-xs font-semibold px-2 py-1 bg-rose-100 text-rose-800 rounded">Port 8990 DOWN</span>
+                {% endif %}
+            </div>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-sm font-medium text-slate-700">Rest API (HTTP)</span>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-800 rounded">Port 8080 UP</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-sm font-medium text-slate-700">RabbitMQ Broker</span>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-800 rounded">Opérationnel</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Connecteurs Client SMPP (Temps Réel) -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900">Connecteurs Client SMPP (jcli: `smppcc -l`)</h3>
+        <span class="text-xs font-mono text-slate-400">Total: {{ stats.total_connectors }}</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-200">
+                    <th class="py-3.5 px-6">CID</th>
+                    <th class="py-3.5 px-6">Service</th>
+                    <th class="py-3.5 px-6">Statut</th>
+                    <th class="py-3.5 px-6">Session</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm font-mono">
+                {% if smpp_connectors %}
+                    {% for c in smpp_connectors %}
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="py-3.5 px-6 font-bold text-slate-900">#{{ c.cid }}</td>
+                            <td class="py-3.5 px-6 text-slate-600">{{ c.service }}</td>
+                            <td class="py-3.5 px-6 font-sans">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if 'STARTED' in c.status or 'UP' in c.status %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+                                    {{ c.status }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-6 font-sans">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if 'BOUND' in c.session %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                                    {{ c.session }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="py-6 px-6 text-center text-slate-400 font-sans">
+                            {% if jasmin_connected %}
+                                Aucun connecteur SMPP configuré.
+                            {% else %}
+                                Connexion à la CLI Jasmin (port 8990) indisponible.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Derniers SMS traités -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900">Derniers SMS Traités</h3>
+        <a href="{% url 'sms:sms_list' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition">
+            Voir tout l'historique <i class="fa-solid fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-200">
+                    <th class="py-3.5 px-6">ID Message</th>
+                    <th class="py-3.5 px-6">Destinataire</th>
+                    <th class="py-3.5 px-6">Message</th>
+                    <th class="py-3.5 px-6">Connecteur</th>
+                    <th class="py-3.5 px-6">Horodatage</th>
+                    <th class="py-3.5 px-6">Statut</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3.5 px-6 font-mono text-xs text-slate-500">#MSG-9482</td>
+                    <td class="py-3.5 px-6 font-medium text-slate-900">+228 90 12 34 56</td>
+                    <td class="py-3.5 px-6 truncate max-w-xs text-slate-600">Votre code de vérification est 492019</td>
+                    <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">smpp_smstogo</span></td>
+                    <td class="py-3.5 px-6 text-xs text-slate-500">Aujourd'hui, 14:32</td>
+                    <td class="py-3.5 px-6">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <i class="fa-solid fa-check text-[10px] mr-1"></i> DELIVRD
+                        </span>
+                    </td>
+                </tr>
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3.5 px-6 font-mono text-xs text-slate-500">#MSG-9481</td>
+                    <td class="py-3.5 px-6 font-medium text-slate-900">+228 99 87 65 43</td>
+                    <td class="py-3.5 px-6 truncate max-w-xs text-slate-600">Alerte sécurité: Connexion détectée sur votre compte</td>
+                    <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">smpp_moov</span></td>
+                    <td class="py-3.5 px-6 text-xs text-slate-500">Aujourd'hui, 14:28</td>
+                    <td class="py-3.5 px-6">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <i class="fa-solid fa-check text-[10px] mr-1"></i> DELIVRD
+                        </span>
+                    </td>
+                </tr>
+                <tr class="hover:bg-slate-50/80 transition">
+                    <td class="py-3.5 px-6 font-mono text-xs text-slate-500">#MSG-9480</td>
+                    <td class="py-3.5 px-6 font-medium text-slate-900">+228 91 00 11 22</td>
+                    <td class="py-3.5 px-6 truncate max-w-xs text-slate-600">Votre solde BGFI est de 450.000 XOF</td>
+                    <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">smpp_tgcel</span></td>
+                    <td class="py-3.5 px-6 text-xs text-slate-500">Aujourd'hui, 14:15</td>
+                    <td class="py-3.5 px-6">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            <i class="fa-solid fa-spinner fa-spin text-[10px] mr-1"></i> SENT
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Connecteurs SMPP | Jasmin SMS Gateway{% endblock %}
+{% block header_title %}Gestion des Connecteurs SMPP Client{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Formulaire d'ajout -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-fit">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">Nouveau connecteur SMPP</h3>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">CID (Identifiant)</label>
+                {{ form.cid }}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Hôte / IP</label>
+                    {{ form.host }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Port</label>
+                    {{ form.port }}
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">System ID (Username)</label>
+                {{ form.username }}
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mot de passe</label>
+                {{ form.password }}
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">System Type (Optionnel)</label>
+                {{ form.system_type }}
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition shadow-sm">
+                <i class="fa-solid fa-plus mr-1"></i> Créer le connecteur
+            </button>
+        </form>
+    </div>
+
+    <!-- Tableau des connecteurs existants -->
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-slate-900">Connecteurs configurés (jcli)</h3>
+            <a href="{% url 'jasmin_config:connectors_list' %}" class="text-xs text-slate-500 hover:text-slate-800">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Actualiser
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-200">
+                        <th class="py-3.5 px-6">CID</th>
+                        <th class="py-3.5 px-6">Service</th>
+                        <th class="py-3.5 px-6">Statut</th>
+                        <th class="py-3.5 px-6">Session</th>
+                        <th class="py-3.5 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm font-mono">
+                    {% if connectors %}
+                        {% for c in connectors %}
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="py-3.5 px-6 font-bold text-slate-900">#{{ c.cid }}</td>
+                                <td class="py-3.5 px-6 text-slate-600 font-sans">{{ c.service }}</td>
+                                <td class="py-3.5 px-6 font-sans">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if 'STARTED' in c.status or 'UP' in c.status %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+                                        {{ c.status }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-6 font-sans">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if 'BOUND' in c.session %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                                        {{ c.session }}
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-6 font-sans text-right space-x-1">
+                                    {% if 'STOPPED' in c.status or 'UNBOUND' in c.session %}
+                                        <a href="{% url 'connector_action' c.cid 'start' %}" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded text-xs font-semibold transition" title="Démarrer">
+                                            <i class="fa-solid fa-play"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'connector_action' c.cid 'stop' %}" class="px-2.5 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded text-xs font-semibold transition" title="Arrêter">
+                                            <i class="fa-solid fa-stop"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'connector_action' c.cid 'delete' %}" onclick="return confirm('Supprimer le connecteur {{ c.cid }} ?');" class="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded text-xs font-semibold transition" title="Supprimer">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-slate-400 font-sans">
+                                Aucun connecteur SMPP détecté sur Jasmin.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

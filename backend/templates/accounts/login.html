@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion | Jasmin SMS Gateway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-xl shadow-2xl overflow-hidden p-8">
+        <div class="text-center mb-8">
+            <img src="{% static 'images/BGFIGAB.jpeg' %}" alt="Logo BGFI Bank" class="h-16 w-auto mx-auto mb-3 object-contain">
+            <h2 class="text-2xl font-bold text-gray-900">Jasmin SMS Gateway</h2>
+            <p class="text-sm text-gray-500 mt-1">Plateforme d'administration & exploitation</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                Identifiants incorrects. Veuillez réessayer.
+            </div>
+        {% endif %}
+
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+            <div>
+                <label for="id_username" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Nom d'utilisateur</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fa-solid fa-user"></i>
+                    </span>
+                    <input type="text" name="username" id="id_username" required
+                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                           placeholder="Ex: admin">
+                </div>
+            </div>
+
+            <div>
+                <label for="id_password" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Mot de passe</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fa-solid fa-lock"></i>
+                    </span>
+                    <input type="password" name="password" id="id_password" required
+                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                           placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm transition duration-150 ease-in-out shadow-md">
+                Se connecter
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>

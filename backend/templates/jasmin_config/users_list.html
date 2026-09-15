@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Utilisateurs Jasmin SMS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Utilisateurs Jasmin</h1>
+      <p class="text-sm text-gray-500">Gestion des comptes d'envoi SMS (user -a / user -r)</p>
+    </div>
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if jasmin_connected %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+      {% if jasmin_connected %}CLI Connectée{% else %}CLI Déconnectée{% endif %}
+    </span>
+  </div>
+
+  {% if messages %}
+    <div class="mb-6">
+      {% for message in messages %}
+        <div class="p-4 mb-2 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Formulaire de création d'utilisateur -->
+    <div class="bg-white p-6 shadow-sm border border-gray-200 rounded-lg">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Nouveau Compte Utilisateur</h2>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Identifiant (UID)</label>
+          {{ form.uid }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Groupe (GID)</label>
+          {{ form.gid }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur SMS</label>
+          {{ form.username }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+          {{ form.password }}
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors">
+          Créer l'utilisateur
+        </button>
+      </form>
+    </div>
+
+    <!-- Tableau de la liste des utilisateurs -->
+    <div class="lg:col-span-2 bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50 text-gray-500 font-medium">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left">UID</th>
+            <th scope="col" class="px-6 py-3 text-left">Groupe (GID)</th>
+            <th scope="col" class="px-6 py-3 text-left">Balance</th>
+            <th scope="col" class="px-6 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+          {% for user in users %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                #{{ user.uid }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                {{ user.gid }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-gray-100 text-gray-800">
+                  {{ user.balance }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
+                <a href="{% url 'user_action' user.uid 'delete' %}" onclick="return confirm('Supprimer cet utilisateur ?');" class="text-red-600 hover:text-red-900 font-medium">
+                  Supprimer
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                {% if jasmin_connected %}
+                  Aucun utilisateur Jasmin trouvé.
+                {% else %}
+                  Impossible de charger les utilisateurs. Vérifiez la connexion avec la CLI Jasmin (port 8990).
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

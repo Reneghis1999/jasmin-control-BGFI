@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Historique des SMS - Jasmin Gateway{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+    <!-- En-tête -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Historique des SMS</h1>
+            <p class="text-sm text-gray-500 mt-1">Suivez les envois et les accusés de réception (DLR) en temps réel.</p>
+        </div>
+        <div>
+            <a href="{% url 'sms:send_sms' %}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Nouvel envoi
+            </a>
+        </div>
+    </div>
+
+    <!-- Cartes des Statistiques -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total Envoyés -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Envoyés</p>
+                    <p class="text-3xl font-extrabold text-gray-900 mt-2">{{ total_sent }}</p>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Livrés -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">SMS Livrés (DLR)</p>
+                    <p class="text-3xl font-extrabold text-emerald-600 mt-2">{{ total_delivered }}</p>
+                </div>
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Échecs -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Échecs / Non Livrés</p>
+                    <p class="text-3xl font-extrabold text-rose-600 mt-2">{{ total_failed }}</p>
+                </div>
+                <div class="p-3 bg-rose-50 text-rose-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau d'Historique -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <h2 class="text-base font-semibold text-gray-800">Journal des Messages</h2>
+            <span class="text-xs text-gray-500">{{ logs.count }} message(s)</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
+                <thead class="bg-gray-50 text-xs font-semibold uppercase text-gray-500 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3">ID Message</th>
+                        <th class="px-6 py-3">Destinataire</th>
+                        <th class="px-6 py-3">Expéditeur</th>
+                        <th class="px-6 py-3">Message</th>
+                        <th class="px-6 py-3">Statut</th>
+                        <th class="px-6 py-3">Date d'envoi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for log in logs %}
+                    <tr class="hover:bg-gray-50/80 transition-colors">
+                        <td class="px-6 py-4 font-mono text-xs text-gray-700 font-medium">
+                            {{ log.msg_id }}
+                        </td>
+                        <td class="px-6 py-4 font-medium text-gray-900">
+                            {{ log.recipient }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">
+                            {{ log.sender_id|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 max-w-xs truncate text-gray-700" title="{{ log.message }}">
+                            {{ log.message }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if log.status == 'DELIVRD' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                    ● Livré
+                                </span>
+                            {% elif log.status == 'SENT' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                    ● Transmis
+                                </span>
+                            {% elif log.status == 'PENDING' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                    ● En attente
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">
+                                    ● {{ log.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-500">
+                            {{ log.created_at|date:"d/m/Y H:i:s" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-400">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            </svg>
+                            Aucun SMS enregistré dans l'historique pour le moment.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
