@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Tableau de bord | Jasmin SMS Gateway{% endblock %}
 
@@ -11,8 +12,14 @@
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">SMS Envoyés (Mois)</p>
-            <h3 class="text-3xl font-bold text-slate-900 mt-1">128,450</h3>
-            <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fa-solid fa-arrow-up mr-1"></i>+12% par rapport au mois dernier</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">{{ kpi.sent_month|intcomma }}</h3>
+            {% if kpi.month_delta is None %}
+                <p class="text-xs text-slate-400 mt-1 font-medium"><i class="fa-solid fa-minus mr-1"></i>Pas d'historique le mois dernier</p>
+            {% elif kpi.month_delta >= 0 %}
+                <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fa-solid fa-arrow-up mr-1"></i>+{{ kpi.month_delta }}% par rapport au mois dernier</p>
+            {% else %}
+                <p class="text-xs text-rose-600 mt-1 font-medium"><i class="fa-solid fa-arrow-down mr-1"></i>{{ kpi.month_delta }}% par rapport au mois dernier</p>
+            {% endif %}
         </div>
         <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl">
             <i class="fa-solid fa-paper-plane"></i>
@@ -23,8 +30,16 @@
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Taux de Délivrance</p>
-            <h3 class="text-3xl font-bold text-slate-900 mt-1">98.4%</h3>
-            <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Service stable</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">
+                {% if kpi.delivery_rate is None %}—{% else %}{{ kpi.delivery_rate }}%{% endif %}
+            </h3>
+            {% if kpi.delivery_rate is None %}
+                <p class="text-xs text-slate-400 mt-1 font-medium"><i class="fa-solid fa-hourglass-half mr-1"></i>Aucun DLR reçu ce mois-ci</p>
+            {% elif kpi.delivery_rate >= 95 %}
+                <p class="text-xs text-emerald-600 mt-1 font-medium"><i class="fa-solid fa-circle-check mr-1"></i>Sur {{ kpi.resolved_month }} DLR reçu{{ kpi.resolved_month|pluralize }}</p>
+            {% else %}
+                <p class="text-xs text-amber-600 mt-1 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Sur {{ kpi.resolved_month }} DLR reçu{{ kpi.resolved_month|pluralize }}</p>
+            {% endif %}
         </div>
         <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl">
             <i class="fa-solid fa-chart-pie"></i>
@@ -59,12 +74,54 @@
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Échecs d'envoi</p>
-            <h3 class="text-3xl font-bold text-slate-900 mt-1">142</h3>
-            <p class="text-xs text-rose-600 mt-1 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>0.11% de rejet</p>
+            <h3 class="text-3xl font-bold text-slate-900 mt-1">{{ kpi.failed_month|intcomma }}</h3>
+            {% if kpi.failure_rate is None %}
+                <p class="text-xs text-slate-400 mt-1 font-medium"><i class="fa-solid fa-minus mr-1"></i>Aucun envoi résolu ce mois-ci</p>
+            {% else %}
+                <p class="text-xs mt-1 font-medium {% if kpi.failure_rate > 5 %}text-rose-600{% else %}text-slate-500{% endif %}">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ kpi.failure_rate }}% de rejet
+                </p>
+            {% endif %}
         </div>
         <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-xl">
             <i class="fa-solid fa-circle-xmark"></i>
         </div>
+    </div>
+</div>
+
+<!-- Volume quotidien -->
+<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-8">
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900">Volume des 14 derniers jours</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Répartition livrés / en attente / échecs par jour</p>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-slate-500">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>Livrés</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-slate-300"></span>En attente</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>Échecs</span>
+        </div>
+    </div>
+    <div class="flex items-end justify-between gap-1.5 h-40">
+        {% for d in daily %}
+            <div class="flex-1 flex flex-col items-center justify-end h-full group">
+                <span class="text-[10px] font-semibold text-slate-400 mb-1 opacity-0 group-hover:opacity-100 transition">{{ d.total }}</span>
+                <div class="w-full flex flex-col justify-end rounded-t overflow-hidden transition hover:opacity-80"
+                     style="height: {{ d.height }}%; min-height: {% if d.total %}4px{% else %}2px{% endif %};"
+                     title="{{ d.date|date:'d/m/Y' }} — {{ d.total }} envoi{{ d.total|pluralize }}, {{ d.delivered }} livré{{ d.delivered|pluralize }}, {{ d.failed }} échec{{ d.failed|pluralize }}">
+                    {% if d.total %}
+                        {% widthratio d.failed d.total 100 as pct_failed %}
+                        {% widthratio d.delivered d.total 100 as pct_delivered %}
+                        <div class="bg-rose-500 w-full" style="height: {{ pct_failed }}%"></div>
+                        <div class="bg-slate-300 w-full flex-1"></div>
+                        <div class="bg-emerald-500 w-full" style="height: {{ pct_delivered }}%"></div>
+                    {% else %}
+                        <div class="bg-slate-100 w-full h-full"></div>
+                    {% endif %}
+                </div>
+                <span class="text-[10px] text-slate-400 mt-2 whitespace-nowrap">{{ d.date|date:"d/m" }}</span>
+            </div>
+        {% endfor %}
     </div>
 </div>
 
@@ -109,31 +166,20 @@
             </a>
         </div>
         <div class="space-y-4">
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <span class="w-2.5 h-2.5 rounded-full {% if jasmin_connected %}bg-emerald-500{% else %}bg-rose-500{% endif %}"></span>
-                    <span class="text-sm font-medium text-slate-700">Jasmin CLI (jcli)</span>
+            {% for svc in services.values %}
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="w-2.5 h-2.5 rounded-full {% if svc.up %}bg-emerald-500{% else %}bg-rose-500{% endif %}"></span>
+                        <span class="text-sm font-medium text-slate-700">{{ svc.label }}</span>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded {% if svc.up %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+                        Port {{ svc.port }} {% if svc.up %}UP{% else %}DOWN{% endif %}
+                    </span>
                 </div>
-                {% if jasmin_connected %}
-                    <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-800 rounded">Port 8990 UP</span>
-                {% else %}
-                    <span class="text-xs font-semibold px-2 py-1 bg-rose-100 text-rose-800 rounded">Port 8990 DOWN</span>
-                {% endif %}
-            </div>
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span class="text-sm font-medium text-slate-700">Rest API (HTTP)</span>
-                </div>
-                <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-800 rounded">Port 8080 UP</span>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span class="text-sm font-medium text-slate-700">RabbitMQ Broker</span>
-                </div>
-                <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-800 rounded">Opérationnel</span>
-            </div>
+            {% endfor %}
+            <p class="text-[11px] text-slate-400 pt-1">
+                <i class="fa-solid fa-circle-info mr-1"></i>Sondes TCP sur {{ jasmin_host }}, rafraîchies toutes les 15 s.
+            </p>
         </div>
     </div>
 </div>
@@ -142,7 +188,7 @@
 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
     <div class="p-6 border-b border-slate-100 flex items-center justify-between">
         <h3 class="text-lg font-bold text-slate-900">Connecteurs Client SMPP (jcli: `smppcc -l`)</h3>
-        <span class="text-xs font-mono text-slate-400">Total: {{ stats.total_connectors }}</span>
+        <span class="text-xs font-mono text-slate-400">Total: {{ stats.total_connectors|default:"0" }}</span>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -150,7 +196,7 @@
                 <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-200">
                     <th class="py-3.5 px-6">CID</th>
                     <th class="py-3.5 px-6">Service</th>
-                    <th class="py-3.5 px-6">Statut</th>
+                    <th class="py-3.5 px-6">Démarrages / Arrêts</th>
                     <th class="py-3.5 px-6">Session</th>
                 </tr>
             </thead>
@@ -159,14 +205,16 @@
                     {% for c in smpp_connectors %}
                         <tr class="hover:bg-slate-50/80 transition">
                             <td class="py-3.5 px-6 font-bold text-slate-900">#{{ c.cid }}</td>
-                            <td class="py-3.5 px-6 text-slate-600">{{ c.service }}</td>
                             <td class="py-3.5 px-6 font-sans">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if 'STARTED' in c.status or 'UP' in c.status %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}">
-                                    {{ c.status }}
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if c.is_started %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+                                    {{ c.service }}
                                 </span>
                             </td>
+                            <td class="py-3.5 px-6 font-sans text-slate-500 text-xs">
+                                {{ c.starts }} / {{ c.stops }}
+                            </td>
                             <td class="py-3.5 px-6 font-sans">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if 'BOUND' in c.session %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium {% if c.is_bound %}bg-blue-100 text-blue-800{% else %}bg-amber-100 text-amber-800{% endif %}">
                                     {{ c.session }}
                                 </span>
                             </td>
@@ -203,48 +251,42 @@
                     <th class="py-3.5 px-6">ID Message</th>
                     <th class="py-3.5 px-6">Destinataire</th>
                     <th class="py-3.5 px-6">Message</th>
-                    <th class="py-3.5 px-6">Connecteur</th>
+                    <th class="py-3.5 px-6">Expéditeur</th>
                     <th class="py-3.5 px-6">Horodatage</th>
                     <th class="py-3.5 px-6">Statut</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-6 font-mono text-xs text-slate-500">#MSG-9482</td>
-                    <td class="py-3.5 px-6 font-medium text-slate-900">+228 90 12 34 56</td>
-                    <td class="py-3.5 px-6 truncate max-w-xs text-slate-600">Votre code de vérification est 492019</td>
-                    <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">smpp_smstogo</span></td>
-                    <td class="py-3.5 px-6 text-xs text-slate-500">Aujourd'hui, 14:32</td>
-                    <td class="py-3.5 px-6">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                            <i class="fa-solid fa-check text-[10px] mr-1"></i> DELIVRD
-                        </span>
-                    </td>
-                </tr>
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-6 font-mono text-xs text-slate-500">#MSG-9481</td>
-                    <td class="py-3.5 px-6 font-medium text-slate-900">+228 99 87 65 43</td>
-                    <td class="py-3.5 px-6 truncate max-w-xs text-slate-600">Alerte sécurité: Connexion détectée sur votre compte</td>
-                    <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">smpp_moov</span></td>
-                    <td class="py-3.5 px-6 text-xs text-slate-500">Aujourd'hui, 14:28</td>
-                    <td class="py-3.5 px-6">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                            <i class="fa-solid fa-check text-[10px] mr-1"></i> DELIVRD
-                        </span>
-                    </td>
-                </tr>
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="py-3.5 px-6 font-mono text-xs text-slate-500">#MSG-9480</td>
-                    <td class="py-3.5 px-6 font-medium text-slate-900">+228 91 00 11 22</td>
-                    <td class="py-3.5 px-6 truncate max-w-xs text-slate-600">Votre solde BGFI est de 450.000 XOF</td>
-                    <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">smpp_tgcel</span></td>
-                    <td class="py-3.5 px-6 text-xs text-slate-500">Aujourd'hui, 14:15</td>
-                    <td class="py-3.5 px-6">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                            <i class="fa-solid fa-spinner fa-spin text-[10px] mr-1"></i> SENT
-                        </span>
-                    </td>
-                </tr>
+                {% for log in recent_logs %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3.5 px-6 font-mono text-xs text-slate-500" title="{{ log.msg_id }}">{{ log.msg_id|truncatechars:18 }}</td>
+                        <td class="py-3.5 px-6 font-medium text-slate-900">{{ log.recipient }}</td>
+                        <td class="py-3.5 px-6 truncate max-w-xs text-slate-600" title="{{ log.message }}">{{ log.message|truncatechars:48 }}</td>
+                        <td class="py-3.5 px-6"><span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">{{ log.sender_id|default:"—" }}</span></td>
+                        <td class="py-3.5 px-6 text-xs text-slate-500">{{ log.created_at|date:"d/m/Y H:i" }}</td>
+                        <td class="py-3.5 px-6">
+                            {% if log.status == 'DELIVRD' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                    <i class="fa-solid fa-check text-[10px] mr-1"></i>{{ log.status }}
+                                </span>
+                            {% elif log.status == 'PENDING' or log.status == 'SENT' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                    <i class="fa-solid fa-spinner text-[10px] mr-1"></i>{{ log.status }}
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                                    <i class="fa-solid fa-xmark text-[10px] mr-1"></i>{{ log.status }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-10 text-center text-sm text-slate-400">
+                            <i class="fa-solid fa-inbox mr-2"></i>Aucun SMS enregistré pour le moment.
+                        </td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

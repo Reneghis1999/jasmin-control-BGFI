@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Groupes Jasmin SMS{% endblock %}
+{% block header_title %}Groupes Jasmin{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
@@ -14,15 +15,6 @@
     </span>
   </div>
 
-  {% if messages %}
-    <div class="mb-6">
-      {% for message in messages %}
-        <div class="p-4 mb-2 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Formulaire de création -->
@@ -56,9 +48,13 @@
                 #{{ group.gid }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
-                <a href="{% url 'group_action' group.gid 'delete' %}" onclick="return confirm('Supprimer ce groupe ?');" class="text-red-600 hover:text-red-900 font-medium">
-                  Supprimer
-                </a>
+                <form method="post" action="{% url 'jasmin_config:group_action' group.gid 'delete' %}"
+                      onsubmit="return confirm('Supprimer le groupe {{ group.gid }} ?');" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="text-red-600 hover:text-red-900 font-medium">
+                    Supprimer
+                  </button>
+                </form>
               </td>
             </tr>
           {% empty %}

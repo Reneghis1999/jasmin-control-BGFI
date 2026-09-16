@@ -1,5 +1,4 @@
 import logging
-import re
 import socket
 import time
 from django.conf import settings
@@ -180,16 +179,8 @@ class JasminCLIClient:
         return self.execute_command(f"group -r {gid}")
 
     def get_groups_list(self) -> list:
-        raw = self.execute_command("group -l")
-        groups = []
-        for line in raw.splitlines():
-            line = line.strip()
-            if line.startswith("#") and not line.startswith("#Gid"):
-                parts = re.split(r'\s{2,}', line)
-                if parts:
-                    gid = parts[0].replace('#', '').strip()
-                    groups.append({'gid': gid})
-        return groups
+        # Colonne unique de `group -l` : Group id.
+        return self._parse_table(self.execute_command("group -l"), ['gid'])
 
     # --- UTILISATEURS ---
 
@@ -273,38 +264,46 @@ class JasminCLIClient:
 
         return result
 
+    @staticmethod
+    def _parse_table(raw_output: str, champs: list) -> list:
+        """Découpe une table jcli en dictionnaires.
+
+        jcli aligne ses colonnes sur une largeur fixe et préfixe chaque ligne
+        d'un `#`, en-tête compris (`#Connector id  Service  Session  …`). Deux
+        pièges en découlent :
+
+        * l'en-tête doit être ignoré, sinon il devient une fausse entrée — et son
+          libellé varie (`#Connector id`, `#User id`), donc on ne peut pas le
+          reconnaître par son texte : c'est simplement la première ligne ;
+        * les colonnes ne sont pas séparées par au moins deux espaces. Une valeur
+          qui remplit sa colonne n'en laisse qu'un (`started BOUND_TRX`), ce qui
+          fusionnerait deux champs. Les valeurs jcli ne contenant jamais
+          d'espace, on découpe sur n'importe quelle suite d'espaces.
+        """
+        lignes = [l.strip() for l in raw_output.splitlines() if l.strip().startswith('#')]
+        entrees = []
+        for ligne in lignes[1:]:  # la première ligne est l'en-tête
+            valeurs = ligne.lstrip('#').split()
+            if not valeurs:
+                continue
+            entree = {nom: (valeurs[i] if i < len(valeurs) else 'N/A') for i, nom in enumerate(champs)}
+            entrees.append(entree)
+        return entrees
+
     def _parse_smppcc_list(self, raw_output: str) -> list:
-        connectors = []
-        for line in raw_output.splitlines():
-            line = line.strip()
-            if line.startswith("#") and not line.startswith("#Cid"):
-                parts = re.split(r'\s{2,}', line)
-                if len(parts) >= 3:
-                    cid = parts[0].replace('#', '').strip()
-                    service = parts[1].strip() if len(parts) > 1 else 'N/A'
-                    status = parts[2].strip() if len(parts) > 2 else 'UNKNOWN'
-                    session = parts[3].strip() if len(parts) > 3 else 'N/A'
-                    connectors.append({
-                        'cid': cid,
-                        'service': service,
-                        'status': status,
-                        'session': session
-                    })
+        # Colonnes de `smppcc -l` : Connector id, Service, Session, Starts, Stops.
+        connectors = self._parse_table(raw_output, ['cid', 'service', 'session', 'starts', 'stops'])
+        for c in connectors:
+            # jcli écrit ces valeurs en minuscules (`started`, `bound_trx`) : les
+            # gabarits ne peuvent pas comparer la casse, on tranche ici.
+            c['is_started'] = c['service'].lower() == 'started'
+            c['is_bound'] = 'bound' in c['session'].lower()
+            # `status` reste exposé pour compatibilité avec les gabarits existants.
+            c['status'] = c['service']
         return connectors
 
     def _parse_user_list(self, raw_output: str) -> list:
-        users = []
-        for line in raw_output.splitlines():
-            line = line.strip()
-            if line.startswith("#") and not line.startswith("#Uid"):
-                parts = re.split(r'\s{2,}', line)
-                if len(parts) >= 2:
-                    uid = parts[0].replace('#', '').strip()
-                    gid = parts[1].strip() if len(parts) > 1 else 'N/A'
-                    balance = parts[2].strip() if len(parts) > 2 else 'N/A'
-                    users.append({
-                        'uid': uid,
-                        'gid': gid,
-                        'balance': balance
-                    })
-        return users
+        # Colonnes de `user -l` : User id, Group id, Username, Balance, MT SMS, Throughput.
+        return self._parse_table(
+            raw_output, ['uid', 'gid', 'username', 'balance', 'mt_sms', 'throughput']
+        )

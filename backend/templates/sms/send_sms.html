@@ -8,18 +8,6 @@
 <div class="max-w-3xl mx-auto">
 
     <!-- Messages d'alerte (Succès / Erreur) -->
-    {% if messages %}
-        <div class="mb-6 space-y-2">
-            {% for message in messages %}
-                <div class="p-4 rounded-xl border text-sm flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800{% else %}bg-rose-50 border-rose-200 text-rose-800{% endif %}">
-                    <div class="flex items-center gap-2.5">
-                        <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check text-emerald-600{% else %}fa-circle-exclamation text-rose-600{% endif %}"></i>
-                        <span class="font-medium">{{ message }}</span>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
 
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         

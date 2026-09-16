@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Django
+*.sqlite3
+*.log
+
+# Secrets
+.env
+
+# Config locale de l'éditeur (chemins absolus)
+.claude/

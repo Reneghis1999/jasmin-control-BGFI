@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
 
     # Applications Métier
     'apps.accounts',
@@ -51,6 +52,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.jasmin_config.context_processors.jasmin_health',
             ],
         },
     },
@@ -92,3 +94,4 @@ JASMIN_USERNAME = os.getenv('JASMIN_USERNAME', 'jcliadmin')
 JASMIN_PASSWORD = os.getenv('JASMIN_PASSWORD', 'jclipwd')
 JASMIN_TIMEOUT = int(os.getenv('JASMIN_TIMEOUT', 30))
 JASMIN_HTTP_PORT = int(os.getenv('JASMIN_HTTP_PORT', 1401))
+JASMIN_AMQP_PORT = int(os.getenv('JASMIN_AMQP_PORT', 5672))
