@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Utilisateurs Jasmin SMS{% endblock %}
+{% block header_title %}Utilisateurs Jasmin{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
@@ -14,15 +15,6 @@
     </span>
   </div>
 
-  {% if messages %}
-    <div class="mb-6">
-      {% for message in messages %}
-        <div class="p-4 mb-2 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Formulaire de création d'utilisateur -->
@@ -78,9 +70,13 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-xs">
-                <a href="{% url 'user_action' user.uid 'delete' %}" onclick="return confirm('Supprimer cet utilisateur ?');" class="text-red-600 hover:text-red-900 font-medium">
-                  Supprimer
-                </a>
+                <form method="post" action="{% url 'jasmin_config:user_action' user.uid 'delete' %}"
+                      onsubmit="return confirm('Supprimer l&apos;utilisateur {{ user.uid }} ?');" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="text-red-600 hover:text-red-900 font-medium">
+                    Supprimer
+                  </button>
+                </form>
               </td>
             </tr>
           {% empty %}

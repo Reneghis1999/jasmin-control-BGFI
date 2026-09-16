@@ -59,3 +59,35 @@ Ce document détaille l'architecture, le fonctionnement technique et la feuille 
 ### Robustesse & Qualité
 - [ ] Implémenter la gestion des exceptions et le retour d'information utilisateur via le framework `messages` de Django.
 - [ ] Ajouter une suite de tests unitaires pour la validation des formulaires et le mock des requêtes HTTP vers Jasmin.
+
+---
+
+## 5. Développement local sans passerelle
+
+Jasmin ne tourne pas nativement sous Windows (Twisted, RabbitMQ, `/etc/jasmin`).
+Pour développer sans serveur Jasmin ni SMSC, le dépôt fournit un simulateur qui
+reproduit les trois points de contact utilisés par le tableau de bord — la console
+jcli (8990), l'API HTTP `/send` (1401) et un accepteur AMQP (5672) — en respectant
+les formats de sortie réels de jcli.
+
+```bash
+# 1. Dépendances
+python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+
+# 2. Configuration
+cp backend/.env.example backend/.env   # JASMIN_HOST=127.0.0.1
+
+# 3. Simulateur (terminal dédié)
+.venv/Scripts/python tools/jasmin_simulator.py
+
+# 4. Application
+.venv/Scripts/python backend/manage.py migrate
+.venv/Scripts/python backend/manage.py runserver 8000
+```
+
+Le simulateur rejoue la séquence d'accusés d'un vrai SMSC : `ESME_ROK` (niveau 1)
+puis `DELIVRD` (niveau 2) vers l'URL de callback, ce qui permet de valider le
+cycle DLR complet. Aucun SMS n'est réellement émis.
+
+Pour viser une vraie passerelle, il suffit de repointer `JASMIN_HOST` et de
+remonter `JASMIN_TIMEOUT`.

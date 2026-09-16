@@ -107,15 +107,31 @@
                     {% block header_title %}Vue d'ensemble{% endblock %}
                 </h2>
                 <div class="flex items-center gap-4">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                        Jasmin CLI Connecté
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if jasmin_cli_up %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}"
+                          title="jcli {{ jasmin_host }}:{{ services.jcli.port }}">
+                        <span class="w-1.5 h-1.5 rounded-full {% if jasmin_cli_up %}bg-emerald-500{% else %}bg-rose-500{% endif %} mr-1.5"></span>
+                        {% if jasmin_cli_up %}Jasmin CLI Connecté{% else %}Jasmin CLI Injoignable{% endif %}
                     </span>
                 </div>
             </header>
 
             <!-- Page Content -->
             <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
+                {% comment %}
+                Rendu ici pour toutes les pages : chaque gabarit l'affichait ou non,
+                ce qui rendait muettes les actions de certains écrans.
+                {% endcomment %}
+                {% if messages %}
+                    <div class="mb-6 space-y-2">
+                        {% for message in messages %}
+                            <div class="flex items-start gap-3 p-4 text-sm rounded-lg border {% if message.tags == 'error' %}bg-rose-50 text-rose-800 border-rose-200{% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-emerald-50 text-emerald-800 border-emerald-200{% endif %}">
+                                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% elif message.tags == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %} mt-0.5"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
                 {% block content %}
                 {% endblock %}
             </main>
